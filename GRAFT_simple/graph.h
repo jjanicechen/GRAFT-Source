@@ -46,6 +46,9 @@ public:
 private:
 	map<int,double> symbolC;//counts of graphlet are stored here
 
+	int comparisonOperationCounter_g8;
+	int numberOfEdgeSampled;
+
 	vector<prop_vertex> graphAdj;//graph adjacency list and edgelist both are used to make our operations efficient.
 	int vertexCount;
 
@@ -203,11 +206,14 @@ public:
     	for(int i=1;i<=29;i++){//initiating counter
     		symbolC[i]=0;
     	}
+		comparisonOperationCounter_g8 = 0;
+		numberOfEdgeSampled = 0;
     	double rand;
     	for(int i=0;i<edge_list.size();i++)
     	{
     		rand=random_uni01();//generate uniform random number
     		if(rand <= p){
+				numberOfEdgeSampled += 1;
     			signature_count_edge_aggregated(edge_list[i].edge);
     		}
 			//used if intermediate results are needed
@@ -257,6 +263,9 @@ public:
     		cout<<symbolC[i]<<":";
     	}
        	cout<<"\n";
+		cout<<"Number of comparison operations used for counting 4 clique: ";
+		cout<<comparisonOperationCounter_g8<<"\n";
+		cout<<"Number of edge sampled: "<<numberOfEdgeSampled<<"\n";
     }
 
 
@@ -279,12 +288,15 @@ public:
        	if(k==5){
        		map<int,int>::const_iterator f,s;
     	    f=vertexToIndex.find(e.first);
+			comparisonOperationCounter_g8 += ceil(log2(vertexToIndex.size()));
    			s=vertexToIndex.find(e.second);
+			comparisonOperationCounter_g8 += ceil(log2(vertexToIndex.size()));
    			if(f == vertexToIndex.end() or s == vertexToIndex.end())
    			{
    				cout<<"the vertex does not exist\n";
         		exit(1);
    			}
+			comparisonOperationCounter_g8 += 1;
    			v[0]=f->first;//v[0] contains the first vertex of edge
    			v[1]=s->first;//v[1] contains the second vertex of edge
    			if(find(graphAdj[f->second].adj.begin(), graphAdj[f->second].adj.end(), e.second)==graphAdj[f->second].adj.end()
@@ -293,6 +305,7 @@ public:
     	  		cout<<"the edge does not exist\n";
     			exit(1);
    			}
+			comparisonOperationCounter_g8 += 2;
    			//new
    			for (int i=0;i<graphAdj[f->second].adj.size();i++){
    				v[2]=graphAdj[f->second].adj[i];
@@ -345,11 +358,15 @@ public:
    				for(int j=0;j<graphAdj[s->second].adj.size();j++){
     	    		v[3]=graphAdj[s->second].adj[j];
     	    		if (v[3]==f->first or v[2]==v[3]) continue;
+					comparisonOperationCounter_g8 += 1;
 
     	    		//4_node_except_4
     	    		edgesT[2]=findEdge(v[0],v[3]);
+					comparisonOperationCounter_g8 += ceil(log2(edgeSet.size()));
     	    		edgesT[3]=findEdge(v[1],v[2]);
+					comparisonOperationCounter_g8 += ceil(log2(edgeSet.size()));
     	    		edgesT[5]=findEdge(v[2],v[3]);
+					comparisonOperationCounter_g8 += ceil(log2(edgeSet.size()));
 
     	    		if (edgesT[2]==false and edgesT[3]==false and edgesT[5] == false){
     	    			symbolC[3]++;
@@ -365,6 +382,7 @@ public:
     	    			symbolC[7]++;
     	    		}else if(edgesT[2] != false and
     	    				edgesT[3] != false and edgesT[5] != false){
+						comparisonOperationCounter_g8 += 1;
     	    			symbolC[8]++;
     	    		}
     	    		//end_4_node_except_4
