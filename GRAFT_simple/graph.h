@@ -8,7 +8,7 @@
 #include <map>
 #include "StringTokenizer.h"
 #include "random.h"
-	
+
 using namespace std;
 using namespace boost;
 typedef pair<int,int> EDGE;
@@ -46,8 +46,12 @@ public:
 private:
 	map<int,double> symbolC;//counts of graphlet are stored here
 
-	int comparisonOperationCounter_g8; //4-clique
+    int comparisonOperationCounter_g8; //4-clique
+    int comparisonOperationCounter_g7; //chordal-cycle
     int comparisonOperationCounter_g6; //tailed-triangle
+    int comparisonOperationCounter_g5; //4-cycle
+    int comparisonOperationCounter_g4; //3-star
+    int comparisonOperationCounter_g3; //4-path
 	int numberOfEdgeSampled;
 
 	vector<prop_vertex> graphAdj;//graph adjacency list and edgelist both are used to make our operations efficient.
@@ -56,11 +60,11 @@ private:
 	map<int,int> vertexToIndex;//(vertex,index) pair
 	bool vertexToIndexValid;
 
-	
+
 	//Improvement possible: edge_list and edgeSet can be merged, one of the structures is enough for our porpose
 	vector<prop_edge> edge_list;
 	int edgeCount;
-	
+
 	set<EDGE,cmpE> edgeSet;
 	bool edgeSetValid;
 
@@ -79,14 +83,14 @@ public:
     graph_(const char* filename) {
     	vertexToIndexValid=false;
 		edgeSetValid=false;
-		 
+
     	ifstream infile(filename, ios::in);
     	read_graph(infile);
     	vertexToIndexValid=true;
     	initiateEdgeSet();
     }
 
-	
+
     void read_graph(ifstream& datafile)
     {
 
@@ -159,7 +163,7 @@ public:
 
 
     }
-    
+
     void print_stat(int edge_no){
     	cout<<"edge#"<<edge_no<<": ";
 	cout.flush();
@@ -202,13 +206,17 @@ public:
     	}
        	cout<<"\n";
     }
-    
+
     void signature_count_app_agg(double p){//counts all the graphlets
     	for(int i=1;i<=29;i++){//initiating counter
     		symbolC[i]=0;
     	}
 		comparisonOperationCounter_g8 = 0;
+        comparisonOperationCounter_g7 = 0;
         comparisonOperationCounter_g6 = 0;
+        comparisonOperationCounter_g5 = 0;
+        comparisonOperationCounter_g4 = 0;
+        comparisonOperationCounter_g3 = 0;
 		numberOfEdgeSampled = 0;
     	double rand;
     	for(int i=0;i<edge_list.size();i++)
@@ -219,12 +227,12 @@ public:
     			signature_count_edge_aggregated(edge_list[i].edge);
     		}
 			//used if intermediate results are needed
-			/*if ((i+1)%1==0){  
+			/*if ((i+1)%1==0){
 				print_stat(i+1);
 			}*/
 
     	}
-    	
+
 
 		//normalizing the grphlet counts (due to automorphism)
     	symbolC[1]/=2;
@@ -259,7 +267,7 @@ public:
     	for(int i=1;i<=29;i++){
     		symbolC[i]/=p;
     	}
-		
+
 		//output the approximated count
     	for(int i=1;i<=29;i++){
     		cout<<symbolC[i]<<":";
@@ -267,8 +275,16 @@ public:
        	cout<<"\n";
 		cout<<"Number of comparison operations used for counting 4 clique: ";
 		cout<<comparisonOperationCounter_g8<<"\n";
+        cout<<"Number of comparison operations used for counting 4 chordal-cycle: ";
+        cout<<comparisonOperationCounter_g7<<"\n";
         cout<<"Number of comparison operations used for counting tailed-triangle: ";
         cout<<comparisonOperationCounter_g6<<"\n";
+        cout<<"Number of comparison operations used for counting 4 cycle: ";
+        cout<<comparisonOperationCounter_g5<<"\n";
+        cout<<"Number of comparison operations used for counting 3 star : ";
+        cout<<comparisonOperationCounter_g4<<"\n";
+        cout<<"Number of comparison operations used for counting 4 path: ";
+        cout<<comparisonOperationCounter_g3<<"\n";
 		cout<<"Number of edge sampled: "<<numberOfEdgeSampled<<"\n";
     }
 
@@ -280,7 +296,7 @@ public:
     void signature_count_edge_aggregated(EDGE e)//counts all the graphlets embedded with edge "e" as First aligned edge (FAE) and vertex count form 3 to 5
     {
 		int k=5;//number of vertices of largest graphlet we considure
-    	
+
 		vector<int> v;
     	v.resize(k);
 
@@ -293,17 +309,29 @@ public:
        		map<int,int>::const_iterator f,s;
     	    f=vertexToIndex.find(e.first);
 			comparisonOperationCounter_g8 += ceil(log2(vertexToIndex.size()));
+            comparisonOperationCounter_g7 += ceil(log2(vertexToIndex.size()));
             comparisonOperationCounter_g6 += ceil(log2(vertexToIndex.size()));
+            comparisonOperationCounter_g5 += ceil(log2(vertexToIndex.size()));
+            comparisonOperationCounter_g4 += ceil(log2(vertexToIndex.size()));
+            comparisonOperationCounter_g3 += ceil(log2(vertexToIndex.size()));
    			s=vertexToIndex.find(e.second);
 			comparisonOperationCounter_g8 += ceil(log2(vertexToIndex.size()));
+            comparisonOperationCounter_g7 += ceil(log2(vertexToIndex.size()));
             comparisonOperationCounter_g6 += ceil(log2(vertexToIndex.size()));
+            comparisonOperationCounter_g5 += ceil(log2(vertexToIndex.size()));
+            comparisonOperationCounter_g4 += ceil(log2(vertexToIndex.size()));
+            comparisonOperationCounter_g3 += ceil(log2(vertexToIndex.size()));
    			if(f == vertexToIndex.end() or s == vertexToIndex.end())
    			{
    				cout<<"the vertex does not exist\n";
         		exit(1);
    			}
 			comparisonOperationCounter_g8 += 1;
+            comparisonOperationCounter_g7 += 1;
             comparisonOperationCounter_g6 += 1;
+            comparisonOperationCounter_g5 += 1;
+            comparisonOperationCounter_g4 += 1;
+            comparisonOperationCounter_g3 += 1;
    			v[0]=f->first;//v[0] contains the first vertex of edge
    			v[1]=s->first;//v[1] contains the second vertex of edge
    			if(find(graphAdj[f->second].adj.begin(), graphAdj[f->second].adj.end(), e.second)==graphAdj[f->second].adj.end()
@@ -313,7 +341,11 @@ public:
     			exit(1);
    			}
 			comparisonOperationCounter_g8 += 2;
+            comparisonOperationCounter_g7 += 2;
             comparisonOperationCounter_g6 += 2;
+            comparisonOperationCounter_g5 += 2;
+            comparisonOperationCounter_g4 += 2;
+            comparisonOperationCounter_g3 += 2;
    			//new
    			for (int i=0;i<graphAdj[f->second].adj.size();i++){
    				v[2]=graphAdj[f->second].adj[i];
@@ -337,6 +369,7 @@ public:
    					if(findEdge(v[1],v[2]) == false
    							and findEdge(v[1],v[3]) == false
    							and findEdge(v[2],v[3]) == false){
+                        comparisonOperationCounter_g4 += 3;
    						symbolC[4]++;
    					}
    					//end_4_node_star
@@ -371,30 +404,42 @@ public:
     	    		//4_node_except_4
     	    		edgesT[2]=findEdge(v[0],v[3]);
 					comparisonOperationCounter_g8 += ceil(log2(edgeSet.size()));
+                    comparisonOperationCounter_g7 += ceil(log2(edgeSet.size()));
                     comparisonOperationCounter_g6 += ceil(log2(edgeSet.size()));
+                    comparisonOperationCounter_g5 += ceil(log2(edgeSet.size()));
+                    comparisonOperationCounter_g3 += ceil(log2(edgeSet.size()));
     	    		edgesT[3]=findEdge(v[1],v[2]);
-					comparisonOperationCounter_g8 += ceil(log2(edgeSet.size()));
+                    comparisonOperationCounter_g8 += ceil(log2(edgeSet.size()));
+                    comparisonOperationCounter_g7 += ceil(log2(edgeSet.size()));
                     comparisonOperationCounter_g6 += ceil(log2(edgeSet.size()));
+                    comparisonOperationCounter_g5 += ceil(log2(edgeSet.size()));
+                    comparisonOperationCounter_g3 += ceil(log2(edgeSet.size()));
     	    		edgesT[5]=findEdge(v[2],v[3]);
-					comparisonOperationCounter_g8 += ceil(log2(edgeSet.size()));
+                    comparisonOperationCounter_g8 += ceil(log2(edgeSet.size()));
+                    comparisonOperationCounter_g7 += ceil(log2(edgeSet.size()));
                     comparisonOperationCounter_g6 += ceil(log2(edgeSet.size()));
+                    comparisonOperationCounter_g5 += ceil(log2(edgeSet.size()));
+                    comparisonOperationCounter_g3 += ceil(log2(edgeSet.size()));
 
     	    		if (edgesT[2]==false and edgesT[3]==false and edgesT[5] == false){
+                        comparisonOperationCounter_g3 += 3;
     	    			symbolC[3]++;
     	    		}else if(edgesT[2]==false and edgesT[3]== false and edgesT[5] != false){
+                        comparisonOperationCounter_g5 += 3;
     	    			symbolC[5]++;
     	    		}else if(edgesT[5] == false and
     	    				((edgesT[2] == false and edgesT[3] != false) or
     	    						(edgesT[2] != false and edgesT[3] == false)) ){
-                        comparisonOperationCounter_g6 += 1;
+                        comparisonOperationCounter_g6 += 2;
     	    			symbolC[6]++;
     	    		}else if(edgesT[5] != false and
     	    				((edgesT[2] == false and edgesT[3] != false) or
     	    						(edgesT[2] != false and edgesT[3] == false)) ){
+                        comparisonOperationCounter_g7 += 2;
     	    			symbolC[7]++;
     	    		}else if(edgesT[2] != false and
     	    				edgesT[3] != false and edgesT[5] != false){
-						comparisonOperationCounter_g8 += 1;
+						comparisonOperationCounter_g8 += 3;
     	    			symbolC[8]++;
     	    		}
     	    		//end_4_node_except_4
@@ -444,6 +489,7 @@ public:
    					if(findEdge(v[0],v[2]) == false
    							and findEdge(v[0],v[3]) == false
    							and findEdge(v[2],v[3]) == false){
+                        comparisonOperationCounter_g4 += 3;
    						symbolC[4]++;
    					}
    					//end_4_node_star
@@ -474,7 +520,7 @@ public:
    				for(int j=0;j<graphAdj[f->second].adj.size();j++){
     	    		v[3]=graphAdj[f->second].adj[j];
     	    		if (v[3]==s->first or v[2]==v[3]) continue;
-    	    		
+
     	    		for(int k=j+1 ; k < graphAdj[f->second].adj.size() ; k++){
     	    			v[4]=graphAdj[f->second].adj[k];
     	    			if (v[4]==v[0] or v[4]==v[1] or v[4]==v[3]) continue;
@@ -544,7 +590,7 @@ public:
     	  	    			symbolC[12]++;
     	  	    			continue;
     	  	    		}
-    	  	    	
+
     	  	    		if(edgesT[4]==edgesT[6]and edgesT[6]==edgesT[7] and edgesT[7]==edgesT[9] and edgesT[9]==false
     	  	    				and edgesT[2]!=false and edgesT[3]!=false){
     	  	    			symbolC[18]++;
@@ -665,7 +711,7 @@ public:
     	  	      			symbolC[12]++;
     	  	      			continue;
     	  	    		}
-    	  	    		
+
     	  	    		if(edgesT[2]==edgesT[3]and edgesT[3]==edgesT[7] and edgesT[7]==edgesT[8] and edgesT[8]==false
    	  	    				and edgesT[4]!=false and edgesT[6]!=false){
     	  	      			symbolC[18]++;
