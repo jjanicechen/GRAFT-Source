@@ -372,6 +372,7 @@ public:
                         comparisonOperationCounter_g4 += 3;
    						symbolC[4]++;
    					}
+                    comparisonOperationCounter_g4 += 1;
    					//end_4_node_star
 
    					for(int k=j+1; k<graphAdj[f->second].adj.size();k++){
@@ -492,6 +493,7 @@ public:
                         comparisonOperationCounter_g4 += 3;
    						symbolC[4]++;
    					}
+                    comparisonOperationCounter_g4 += 1;
    					//end_4_node_star
 
    					for(int k=j+1; k<graphAdj[s->second].adj.size();k++){
